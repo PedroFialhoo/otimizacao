@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 matriz = None
 si = None
@@ -89,6 +90,41 @@ def subida_da_encosta_tentativas(matriz, n, tentativas):
             t += 1
 
     return melhor_solucao, melhor_valor
+
+
+def sucessor(si, n, matriz):
+    suc = si
+    n1 = np.random(n)
+    while True:
+        n2 = np.random(n)
+        if n2 != n1:
+            break
+    aux = suc[n1]
+    suc[n1] = suc[n2]
+    suc[n2] =  aux
+    vs = avaliar(n, suc, matriz)
+    return suc, vs
+
+def tempera(si, vi, matriz, ti, tf, fr):
+    sa = si
+    va = vi
+    t = ti
+
+    while t <= tf:
+        sn, vn = sucessor(sa, n, matriz)
+    if vn < va :
+        sa =  sn
+        va = vn
+    else:
+        d = vn - va
+        ale = np.random(0,1)
+        aux = math.exp(-d/t)
+        if ale < aux:
+            sa = sn
+            va = vn
+        t *= fr
+    return sa, va
+
 
 n = int(input("Tamanho da Matrix: "))
 tentativas = int(input("Número de tentativas: "))
