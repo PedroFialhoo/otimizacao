@@ -12,7 +12,7 @@ matrizFixa = [
 ]
 
 def solucaoInicialFixa():
-    return np.array([0,1,2,3,4])
+    return np.array([0, 2, 4, 1, 3])
 
 def gerarProblema(n):
     matriz = np.random.randint(low=10, high=100, size=(n, n))
@@ -35,6 +35,22 @@ def avaliar(n, solucao, matriz):
 def print_array(arr):
     print("\n".join(map(str, arr)))
 
+def sucessores(n, atual, matriz, pos):
+    melhor = atual
+    vm = avaliar(n, atual, matriz)
+
+    for i in range(n):
+        if i != pos:
+            suc = atual.copy()
+            suc[i], suc[pos] = suc[pos], suc[i]
+
+            vs = avaliar(n, suc, matriz)
+
+            if vs < vm:
+                melhor = suc
+                vm = vs
+
+    return melhor, vm
 
 def subida_da_encosta(matriz, n, solucao_inicial):
 
@@ -42,63 +58,50 @@ def subida_da_encosta(matriz, n, solucao_inicial):
     valor_atual = avaliar(n, solucao_atual, matriz)
 
     melhorou = True
+    posicoes = list(np.random.permutation(n))
 
     while melhorou:
         melhorou = False
         melhor_vizinho = solucao_atual.copy()
         melhor_valor = valor_atual
 
-        for i in range(n):
-            for j in range(i + 1, n):
-                nova_solucao = solucao_atual.copy()
-                nova_solucao[i], nova_solucao[j] = nova_solucao[j], nova_solucao[i]
+        if not posicoes:
+            posicoes = list(np.random.permutation(n))
 
-                valor_novo = avaliar(n, nova_solucao, matriz)
+        pos = posicoes.pop()
 
-                if valor_novo < melhor_valor:
-                    melhor_valor = valor_novo
-                    melhor_vizinho = nova_solucao
-                    melhorou = True
+        melhor_vizinho, melhor_valor = sucessores(n, solucao_atual, matriz, pos)
 
-        if melhorou:
+        if melhor_valor < valor_atual:
             solucao_atual = melhor_vizinho
             valor_atual = melhor_valor
+            melhorou = True
 
     return solucao_atual, valor_atual
 
-def subida_da_encosta_tentativas(matriz, n, tentativas):
+def subida_da_encosta_tentativas(matriz, n, tentativas,solucao_inicial):
 
-    melhor_solucao = None
-    melhor_valor = float("inf")
+    solucao_atual = solucao_inicial.copy()
+    valor_atual = avaliar(n, solucao_atual, matriz)
 
-    usadas = set()
     t = 0
+    posicoes = list(np.random.permutation(n))
+    while t<tentativas:
+        if not posicoes:
+            posicoes = list(np.random.permutation(n))
+        
+        pos = posicoes.pop()
+        solucao_nova, valor_nova = sucessores(n,solucao_atual,matriz,pos)
 
-    while t < tentativas:
-
-        solucao_inicial = gerarSolucao(n)
-
-        while tuple(solucao_inicial) in usadas:
-            solucao_inicial = gerarSolucao(n)
-
-        usadas.add(tuple(solucao_inicial))
-
-        solucao_atual, valor_atual = subida_da_encosta(matriz, n, solucao_inicial)
-
-        print(f"\nTentativa {t}:")
-        print("Solução atual ->", solucao_atual)
-        print("Valor atual->", valor_atual)
-        print("Melhor valor ->", melhor_valor)
-
-        if valor_atual < melhor_valor:
-            melhor_valor = valor_atual
-            melhor_solucao = solucao_atual
-
+        if valor_nova<valor_atual:
+            solucao_atual = solucao_nova.copy()
+            valor_atual = valor_nova
+            posicoes = list(np.random.permutation(n))
             t = 0
         else:
-            t += 1
-
-    return melhor_solucao, melhor_valor
+            t = t + 1
+        
+    return solucao_atual, valor_atual
 
 def sucessor(solucao, n, matriz):
     suc = solucao.copy()
@@ -112,6 +115,7 @@ def sucessor(solucao, n, matriz):
     suc[n2] =  aux
     vs = avaliar(n, suc, matriz)
     return suc, vs
+
 
 def tempera(si, vi, matriz, ti, tf, fr):
     sa = si.copy()
@@ -128,16 +132,16 @@ def tempera(si, vi, matriz, ti, tf, fr):
         if vn < va :
             sa =  sn
             va = vn
+            if va < vb:
+                vb = va
+                sb = sa.copy()
         else:
             d = vn - va
             ale = np.random.uniform(0,1)
             aux = math.exp(-d/t)
             if ale < aux:
-                sa = sn
+                sa = sn.copy()
                 va = vn
-        if va < vb :
-            vb = va
-            sb = sa.copy()
         t *= fr
     return sb, vb
 
@@ -147,7 +151,7 @@ def preparar_problema(tipo, n=None):
     if tipo == "FIXO":
         matriz = np.array(matrizFixa)
         n = len(matriz)
-        si = np.array([0,1,2,3,4])  # solução fixa
+        si = solucaoInicialFixa()
 
     elif tipo == "ALEATORIO":
         if n is None:
@@ -170,7 +174,7 @@ def executar_metodo(metodo, matriz, si, n, tmax=None, ti=None, tf=None, fr=None)
     elif metodo == "SET":
         if tmax is None:
             raise ValueError("TMAX não informado")
-        return subida_da_encosta_tentativas(matriz, n, tmax)
+        return subida_da_encosta_tentativas(matriz, n, tmax, si)
 
     elif metodo == "TE":
         if None in (ti, tf, fr):
@@ -183,25 +187,35 @@ def executar_metodo(metodo, matriz, si, n, tmax=None, ti=None, tf=None, fr=None)
 def analise_tabela(matriz, si, n):
 
     resultados = []
-
     vi = avaliar(n, si, matriz)
 
-    # ───── SE ─────
-    sol, val = subida_da_encosta(matriz, n, si)
-    resultados.append(("SE", "-", vi - val))
+    EXECUCOES = 30
 
-    # ───── SET ─────
+    melhor_valor = float("inf")
+
+    for _ in range(EXECUCOES):
+        sol, val = subida_da_encosta(matriz, n, si)
+        if val < melhor_valor:
+            melhor_valor = val
+
+    resultados.append(("SE", "---", vi - melhor_valor))
+
     configs_set = [
         ("TMAX=N", n),
-        ("TMAX=2N", 2*n),
-        ("TMAX=N/2", int(n/2))
+        ("TMAX=N/2", int(n/2)),
+        ("TMAX=N/4", int(n/4))
     ]
 
     for nome, tmax in configs_set:
-        sol, val = subida_da_encosta_tentativas(matriz, n, tmax)
-        resultados.append(("SET", nome, vi - val))
+        melhor_valor = float("inf")
 
-    # ───── TÊMPERA ─────
+        for _ in range(EXECUCOES):
+            sol, val = subida_da_encosta_tentativas(matriz, n, tmax, si)
+            if val < melhor_valor:
+                melhor_valor = val
+
+        resultados.append(("SET", nome, vi - melhor_valor))
+
     configs_te = [
         ("TI=100 TF=0.1 FR=0.8", 100, 0.1, 0.8),
         ("TI=200 TF=0.1 FR=0.8", 200, 0.1, 0.8),
@@ -213,7 +227,13 @@ def analise_tabela(matriz, si, n):
     ]
 
     for nome, ti, tf, fr in configs_te:
-        sol, val = tempera(si, vi, matriz, ti, tf, fr)
-        resultados.append(("TE", nome, vi - val))
+        melhor_valor = float("inf")
+
+        for _ in range(EXECUCOES):
+            sol, val = tempera(si, vi, matriz, ti, tf, fr)
+            if val < melhor_valor:
+                melhor_valor = val
+
+        resultados.append(("TE", nome, vi - melhor_valor))
 
     return resultados

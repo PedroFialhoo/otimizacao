@@ -14,10 +14,68 @@ menu = st.sidebar.selectbox(
 
 # ── SOBRE ────────────────────────────────────
 if menu == "Sobre":
-    st.write("Trabalho de Otimização com heurísticas:")
-    st.write("- Subida da Encosta")
-    st.write("- SET")
-    st.write("- Têmpera Simulada")
+
+    st.header("Sobre o Projeto")
+
+    st.info("""
+Trabalho desenvolvido na disciplina de Programação Linear  
+Alunos: Allisson Thomas Castilho e Pedro Henrique Bittencourt Fialho  
+Curso: 5° ADS
+""")
+
+    st.write("""
+O sistema implementa soluções para o Problema do Caixeiro Viajante (TSP),
+cujo objetivo é encontrar a melhor rota possível entre pontos, minimizando o custo total.
+""")
+
+    with st.expander("Representação da Solução"):
+        st.write("""
+As soluções são representadas como permutações dos pontos.
+
+Exemplo utilizado no sistema:
+""")
+        st.code("[0, 2, 4, 1, 3]")
+
+    with st.expander("Matriz de Distâncias"):
+        st.code("""
+[0,5,7,6,8]
+[5,0,3,4,6]
+[7,3,0,2,5]
+[6,4,2,0,3]
+[8,6,5,3,0]
+""")
+
+    with st.expander("Avaliação da Solução"):
+        st.write("""
+O custo de uma rota é calculado pela soma das distâncias entre cidades consecutivas,
+incluindo o retorno ao início.
+
+Exemplo:
+""")
+        st.code("C = 5 + 3 + 2 + 3 + 8 = 21")
+
+    with st.expander("Geração de Vizinhos"):
+        st.write("""
+Novas soluções são geradas trocando a posição de duas cidades na rota.
+
+Também é utilizada uma abordagem que fixa uma posição e busca o melhor vizinho possível
+a partir dela.
+""")
+
+    with st.expander("Métodos Utilizados"):
+        st.write("""
+Foram utilizadas três abordagens heurísticas:
+
+- Subida da Encosta: busca local que aceita apenas melhorias.
+- Subida da Encosta com Tentativas: continua explorando mesmo sem melhora por um limite.
+- Têmpera Simulada: pode aceitar soluções piores para escapar de mínimos locais.
+""")
+
+    with st.expander("Análise"):
+        st.write("""
+O sistema permite executar os métodos individualmente ou compará-los entre si,
+avaliando qual apresenta melhor desempenho.
+""")
 
 # ── GENÉTICOS ────────────────────────────────
 elif menu == "Métodos Genéticos":
@@ -28,7 +86,6 @@ elif menu == "Métodos Básicos":
 
     st.header("Configuração")
 
-    # ── Estado persistente ──
     if "matriz" not in st.session_state:
         st.session_state.matriz = None
         st.session_state.si = None
@@ -36,38 +93,47 @@ elif menu == "Métodos Básicos":
         st.session_state.vi = None
         st.session_state.resultado = None
 
-    # ── Tipo ──
-    tipo = st.selectbox("Tipo de Execução", ["FIXO", "ALEATORIO"])
+    col1, col2 = st.columns(2)
 
-    n = None
-    if tipo == "ALEATORIO":
-        n = st.number_input("Tamanho do Problema", min_value=3, step=1)
+    with col1:
+        tipo = st.selectbox("Tipo de Execução", ["FIXO", "ALEATORIO"])
 
-    # ── GERAR PROBLEMA ──
-    if st.button("Gerar Problema", key="btn_gerar"):
-        matriz, si, n = preparar_problema(tipo, n)
+    with col2:
+        n = None
+        if tipo == "ALEATORIO":
+            n = st.number_input("Tamanho", min_value=3, step=1)
 
-        st.session_state.matriz = matriz
-        st.session_state.si = si
-        st.session_state.n = n
-        st.session_state.vi = None
-        st.session_state.resultado = None
+    st.divider()
 
-        st.success("Problema gerado!")
+    col_btn1, col_btn2 = st.columns(2)
 
-    # ── SOLUÇÃO INICIAL ──
-    if st.button("Solução Inicial", key="btn_si"):
-        if st.session_state.matriz is None:
-            st.error("Gere o problema primeiro!")
-        else:
-            matriz = st.session_state.matriz
-            si = st.session_state.si
-            n = st.session_state.n
+    with col_btn1:
+        if st.button("Gerar Problema"):
+            matriz, si, n = preparar_problema(tipo, n)
 
-            vi = avaliar(n, si, matriz)
-            st.session_state.vi = vi
+            st.session_state.matriz = matriz
+            st.session_state.si = si
+            st.session_state.n = n
+            st.session_state.vi = None
+            st.session_state.resultado = None
 
-    # ── Método ──
+            st.success("Problema gerado!")
+
+    with col_btn2:
+        if st.button("Solução Inicial"):
+            if st.session_state.matriz is None:
+                st.error("Gere o problema primeiro!")
+            else:
+                matriz = st.session_state.matriz
+                si = st.session_state.si
+                n = st.session_state.n
+
+                vi = avaliar(n, si, matriz)
+                st.session_state.vi = vi
+                st.success("Solução inicial calculada!")
+
+    st.divider()
+
     metodo_nome = st.selectbox(
         "Método",
         [
@@ -86,7 +152,6 @@ elif menu == "Métodos Básicos":
 
     metodo = mapa_metodos.get(metodo_nome)
 
-    # ── Parâmetros ──
     tmax = None
     ti = tf = fr = None
 
@@ -94,12 +159,17 @@ elif menu == "Métodos Básicos":
         tmax = st.number_input("TMAX", min_value=1, step=1)
 
     if metodo_nome == "Têmpera Simulada":
-        ti = st.number_input("TI", value=500.0)
-        tf = st.number_input("TF", value=1.0)
-        fr = st.number_input("FR", value=0.95)
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            ti = st.number_input("TI", value=500.0)
+        with col2:
+            tf = st.number_input("TF", value=1.0)
+        with col3:
+            fr = st.number_input("FR", value=0.95)
 
-    # ── EXECUTAR ──
-    if st.button("Executar", key="btn_exec"):
+    st.divider()
+
+    if st.button("Executar"):
 
         if st.session_state.matriz is None:
             st.error("Gere o problema primeiro!")
@@ -108,49 +178,15 @@ elif menu == "Métodos Básicos":
             si = st.session_state.si
             n = st.session_state.n
 
-            # 🔥 ANÁLISE COMPARATIVA
             if metodo_nome == "Análise Comparativa":
 
-                vi = avaliar(n, si, matriz)
-                resultados = []
-
-                # ───── SE ─────
-                sol, val = subida_da_encosta(matriz, n, si)
-                resultados.append(("SE", "-", vi - val))
-
-                # ───── SET ─────
-                configs_set = [
-                    ("TMAX=N", n),
-                    ("TMAX=2N", 2*n),
-                    ("TMAX=N/2", int(n/2))
-                ]
-
-                for nome, tmax_cfg in configs_set:
-                    sol, val = subida_da_encosta_tentativas(matriz, n, tmax_cfg)
-                    resultados.append(("SET", nome, vi - val))
-
-                # ───── TÊMPERA ─────
-                configs_te = [
-                    ("TI=100 TF=0.1 FR=0.8", 100, 0.1, 0.8),
-                    ("TI=200 TF=0.1 FR=0.8", 200, 0.1, 0.8),
-                    ("TI=500 TF=0.1 FR=0.8", 500, 0.1, 0.8),
-                    ("TI=200 TF=0.1 FR=0.9", 200, 0.1, 0.9),
-                    ("TI=500 TF=0.1 FR=0.9", 500, 0.1, 0.9),
-                    ("TI=200 TF=0.01 FR=0.9", 200, 0.01, 0.9),
-                    ("TI=500 TF=0.01 FR=0.9", 500, 0.01, 0.9),
-                ]
-
-                for nome, ti_cfg, tf_cfg, fr_cfg in configs_te:
-                    sol, val = tempera(si, vi, matriz, ti_cfg, tf_cfg, fr_cfg)
-                    resultados.append(("TE", nome, vi - val))
+                resultados = analise_tabela(matriz, si, n)
 
                 df = pd.DataFrame(resultados, columns=["Método", "Observação", "Ganho"])
 
-                st.success("Análise comparativa concluída!")
-                st.write("## Tabela Comparativa")
-                st.dataframe(df)
+                st.success("Análise concluída!")
+                st.dataframe(df, width="stretch")  # ✅ corrigido aqui
 
-            # ───── MÉTODOS NORMAIS ─────
             else:
                 sol, val = executar_metodo(
                     metodo,
@@ -164,31 +200,39 @@ elif menu == "Métodos Básicos":
                 )
 
                 st.session_state.resultado = (sol, val)
-
                 st.success("Resultado encontrado!")
 
-    # ── EXIBIÇÃO PERSISTENTE ──
+    st.divider()
 
+    # ── RESULTADOS ──
     if st.session_state.matriz is not None:
-        st.write("### Matriz")
-        st.write(st.session_state.matriz)
+        st.subheader("Matriz")
+        st.dataframe(st.session_state.matriz, width="stretch")  # ✅ corrigido
 
     if st.session_state.si is not None and st.session_state.vi is not None:
-        st.write("### Solução Inicial")
-        st.write(st.session_state.si)
+        col1, col2 = st.columns(2)
 
-        st.write("### Custo Inicial")
-        st.write(st.session_state.vi)
+        with col1:
+            st.subheader("Solução Inicial")
+            st.code(st.session_state.si.tolist())
+
+        with col2:
+            st.subheader("Custo Inicial")
+            st.write(st.session_state.vi)
 
     if st.session_state.resultado is not None:
         sol, val = st.session_state.resultado
 
-        st.write("### Solução Final")
-        st.write(sol)
+        col1, col2 = st.columns(2)
 
-        st.write("### Custo Final")
-        st.write(val)
+        with col1:
+            st.subheader("Solução Final")
+            st.code(sol.tolist())
+
+        with col2:
+            st.subheader("Custo Final")
+            st.write(val)
 
         if st.session_state.vi is not None:
             ganho = st.session_state.vi - val
-            st.write(f"### Ganho: {ganho}")
+            st.success(f"Ganho: {ganho}")
