@@ -185,7 +185,7 @@ elif menu == "Métodos Básicos":
                 df = pd.DataFrame(resultados, columns=["Método", "Observação", "Ganho"])
 
                 st.success("Análise concluída!")
-                st.dataframe(df, width="stretch")  # ✅ corrigido aqui
+                st.dataframe(df, width="stretch") 
 
             else:
                 sol, val = executar_metodo(
@@ -235,4 +235,7 @@ elif menu == "Métodos Básicos":
 
         if st.session_state.vi is not None:
             ganho = st.session_state.vi - val
+            porcentagem = (ganho / st.session_state.vi) * 100
+
             st.success(f"Ganho: {ganho}")
+            st.success(f"Melhoria: {porcentagem:.2f}%")

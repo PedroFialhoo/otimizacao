@@ -58,17 +58,13 @@ def subida_da_encosta(matriz, n, solucao_inicial):
     valor_atual = avaliar(n, solucao_atual, matriz)
 
     melhorou = True
-    posicoes = list(np.random.permutation(n))
 
     while melhorou:
         melhorou = False
         melhor_vizinho = solucao_atual.copy()
         melhor_valor = valor_atual
 
-        if not posicoes:
-            posicoes = list(np.random.permutation(n))
-
-        pos = posicoes.pop()
+        pos = np.random.randint(0, n)
 
         melhor_vizinho, melhor_valor = sucessores(n, solucao_atual, matriz, pos)
 
@@ -198,7 +194,9 @@ def analise_tabela(matriz, si, n):
         if val < melhor_valor:
             melhor_valor = val
 
-    resultados.append(("SE", "---", vi - melhor_valor))
+    ganho = vi - melhor_valor
+    porcentagem = (ganho / vi) * 100
+    resultados.append(("SE", "---", f"{porcentagem:.2f}%"))
 
     configs_set = [
         ("TMAX=N", n),
@@ -214,7 +212,9 @@ def analise_tabela(matriz, si, n):
             if val < melhor_valor:
                 melhor_valor = val
 
-        resultados.append(("SET", nome, vi - melhor_valor))
+        ganho = vi - melhor_valor
+        porcentagem = (ganho / vi) * 100
+        resultados.append(("SET", nome, f"{porcentagem:.2f}%"))
 
     configs_te = [
         ("TI=100 TF=0.1 FR=0.8", 100, 0.1, 0.8),
@@ -234,6 +234,8 @@ def analise_tabela(matriz, si, n):
             if val < melhor_valor:
                 melhor_valor = val
 
-        resultados.append(("TE", nome, vi - melhor_valor))
-
+        ganho = vi - melhor_valor
+        porcentagem = (ganho / vi) * 100
+        
+        resultados.append(("TE", nome, f"{porcentagem:.2f}%"))
     return resultados
