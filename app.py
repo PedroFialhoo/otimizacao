@@ -1,6 +1,10 @@
 import streamlit as st
 from main import *
 import pandas as pd
+from algoritmoGenetico import (
+    algoritmoGenetico,
+    gerarProblema
+)
 
 st.set_page_config(page_title="TSP", layout="centered")
 
@@ -79,7 +83,112 @@ avaliando qual apresenta melhor desempenho.
 
 # ── GENÉTICOS ────────────────────────────────
 elif menu == "Métodos Genéticos":
-    st.warning("Módulo em desenvolvimento")
+
+    st.header("Algoritmo Genético")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        n = st.number_input(
+            "Quantidade de cidades (N)",
+            min_value=5,
+            value=50
+        )
+
+        tp = st.number_input(
+            "Tamanho da População (TP)",
+            min_value=10,
+            value=100
+        )
+
+        ng = st.number_input(
+            "Número de Gerações (NG)",
+            min_value=1,
+            value=200
+        )
+
+    with col2:
+
+        tc = st.number_input(
+            "Taxa de Cruzamento (TC)",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.90
+        )
+
+        tm = st.number_input(
+            "Taxa de Mutação (TM)",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.15
+        )
+
+        ig = st.number_input(
+            "Elitismo (IG)",
+            min_value=0.0,
+            max_value=1.0,
+            value=0.10
+        )
+
+    metodo_selecao = st.selectbox(
+        "Método de Seleção",
+        ["torneio", "roleta"]
+    )
+
+    st.divider()
+
+    if st.button("Executar Algoritmo Genético"):
+
+        matriz = gerarProblema(n)
+
+        (
+            melhor_inicial,
+            melhor_final,
+            custo_inicial,
+            custo_final
+        ) = algoritmoGenetico(
+            matriz,
+            tp,
+            n,
+            ng,
+            tc,
+            tm,
+            ig,
+            metodo_selecao
+        )
+
+        melhoria = (
+            (custo_inicial - custo_final)
+            / custo_inicial
+        ) * 100
+
+        st.subheader("Matriz")
+
+        st.dataframe(matriz)
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.subheader("Melhor Solução Inicial")
+            st.code(melhor_inicial.tolist())
+
+            st.metric(
+                "Custo Inicial",
+                f"{custo_inicial:.0f}"
+            )
+
+        with col2:
+            st.subheader("Melhor Solução Final")
+            st.code(melhor_final.tolist())
+
+            st.metric(
+                "Custo Final",
+                f"{custo_final:.0f}"
+            )
+
+        st.success(
+            f"Melhoria obtida: {melhoria:.2f}%"
+        )
 
 # ── MÉTODOS BÁSICOS ──────────────────────────
 elif menu == "Métodos Básicos":

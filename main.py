@@ -239,3 +239,4 @@ def analise_tabela(matriz, si, n):
         
         resultados.append(("TE", nome, f"{porcentagem:.2f}%"))
     return resultados
+
