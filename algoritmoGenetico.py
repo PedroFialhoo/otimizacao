@@ -68,16 +68,13 @@ def Torneio(tp, fitness):
         return p1
     else:
         return p2
-    
-# ---------------------------------------------------------------------
-# Cruzamento (baseado no AG do professor, adaptado ao formato vetor)
+
 def cruzamento(p1, p2, ponto, n):
     d1 = np.concatenate((p1[0:ponto], p2[ponto:n]))
     d2 = np.concatenate((p2[0:ponto], p1[ponto:n]))
     return d1, d2
 
-# ---------------------------------------------------------------------
-# Mutação por troca (translocação) - igual ao professor
+
 def mutacao2(d, n):
     pos1 = random.randrange(n)
     pos2 = random.randrange(n)
@@ -90,13 +87,11 @@ def ajustaRestricao(desc, qd, corte, n):
 
         filho = list(desc[i])
 
-        # primeira parte é preservada
         primeira_parte = set(filho[:corte])
 
         usados_segunda = set()
         repetidos = []
 
-        # percorre apenas a segunda parte
         for j in range(corte, n):
 
             gene = filho[j]
@@ -110,10 +105,8 @@ def ajustaRestricao(desc, qd, corte, n):
             else:
                 usados_segunda.add(gene)
 
-        # genes válidos presentes no filho
         usados = primeira_parte.union(usados_segunda)
 
-        # genes que faltam para completar a permutação
         faltantes = []
 
         for gene in range(n):
@@ -122,7 +115,6 @@ def ajustaRestricao(desc, qd, corte, n):
 
         random.shuffle(faltantes)
 
-        # substitui somente as posições inválidas
         for pos in repetidos:
             filho[pos] = faltantes.pop()
 
@@ -130,10 +122,6 @@ def ajustaRestricao(desc, qd, corte, n):
 
     return desc
 
-# ---------------------------------------------------------------------
-# Ajusta restrição: garante que cada filho seja uma permutação válida
-# (versão que preenche a parte após o corte com os genes faltantes,
-#  sorteados aleatoriamente, sem repetição)
 def ajustaRestricaoSimples(desc, qd, corte, n):
     for i in range(qd):
         visto = set()
@@ -149,13 +137,10 @@ def ajustaRestricaoSimples(desc, qd, corte, n):
         desc[i] = np.array(novo)
     return desc
 
-# ---------------------------------------------------------------------
-# Gera descendentes via seleção, cruzamento e mutação
 def gerarDescendentes(pop, fit, tp, n, tc, tm, metodo_selecao):
     qd = 2 * tp
     desc = np.zeros((qd, n), int)
 
-    # ponto de corte aleatório, sorteado uma vez por geração (igual ao professor)
     corte = random.randint(1, n - 1)
 
     i = 0
@@ -187,8 +172,6 @@ def gerarDescendentes(pop, fit, tp, n, tc, tm, metodo_selecao):
 
     return desc, qd, corte
 
-# ---------------------------------------------------------------------
-# Nova população: elitismo + substituição pelos descendentes
 def novaPopulacao(pop, desc, tp, ig):
     elite = int(ig * tp)
     nova = []
@@ -198,8 +181,6 @@ def novaPopulacao(pop, desc, tp, ig):
         nova.append(desc[i])
     return nova
 
-# ---------------------------------------------------------------------
-# Algoritmo Genético principal
 def algoritmoGenetico(matriz, tp, n, ng, tc, tm, ig, metodo_selecao='torneio'):
     pop = popInicial(tp, n)
 
