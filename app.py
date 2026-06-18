@@ -84,6 +84,13 @@ avaliando qual apresenta melhor desempenho.
 # ── GENÉTICOS ────────────────────────────────
 elif menu == "Métodos Genéticos":
 
+    if "ag_matriz" not in st.session_state:
+        st.session_state.ag_matriz = None
+        st.session_state.ag_melhor_inicial = None
+        st.session_state.ag_melhor_final = None
+        st.session_state.ag_custo_inicial = None
+        st.session_state.ag_custo_final = None
+
     st.header("Algoritmo Genético")
 
     col1, col2 = st.columns(2)
@@ -157,39 +164,66 @@ elif menu == "Métodos Genéticos":
             metodo_selecao
         )
 
-        melhoria = (
-            (custo_inicial - custo_final)
-            / custo_inicial
-        ) * 100
+        st.session_state.ag_matriz = matriz
+        st.session_state.ag_melhor_inicial = melhor_inicial
+        st.session_state.ag_melhor_final = melhor_final
+        st.session_state.ag_custo_inicial = custo_inicial
+        st.session_state.ag_custo_final = custo_final
+
+        st.success("Execução concluída!")
+
+    if st.session_state.ag_matriz is not None:
 
         st.subheader("Matriz")
 
-        st.dataframe(matriz)
+        with st.expander("Visualizar matriz"):
+            st.dataframe(
+                st.session_state.ag_matriz,
+                width="stretch"
+            )
 
         col1, col2 = st.columns(2)
 
         with col1:
             st.subheader("Melhor Solução Inicial")
-            st.code(melhor_inicial.tolist())
+            st.code(
+                st.session_state.ag_melhor_inicial.tolist()
+            )
 
             st.metric(
                 "Custo Inicial",
-                f"{custo_inicial:.0f}"
+                f"{st.session_state.ag_custo_inicial:.0f}"
             )
 
         with col2:
             st.subheader("Melhor Solução Final")
-            st.code(melhor_final.tolist())
+            st.code(
+                st.session_state.ag_melhor_final.tolist()
+            )
 
             st.metric(
                 "Custo Final",
-                f"{custo_final:.0f}"
+                f"{st.session_state.ag_custo_final:.0f}"
             )
 
-        st.success(
-            f"Melhoria obtida: {melhoria:.2f}%"
+        ganho = (
+            st.session_state.ag_custo_inicial
+            - st.session_state.ag_custo_final
         )
 
+        melhoria = (
+            ganho
+            / st.session_state.ag_custo_inicial
+        ) * 100
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.success(f"Ganho: {ganho:.0f}")
+
+        with col2:
+            st.success(f"Melhoria: {melhoria:.2f}%")
+            
 # ── MÉTODOS BÁSICOS ──────────────────────────
 elif menu == "Métodos Básicos":
 
